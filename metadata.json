@@ -1,0 +1,6 @@
+{
+  "name": "Personal Data Bank - Jakir",
+  "description": "Encrypted document vault and video bookmark manager with Qatar Airways inspired design, PIN protection, MFA, audit logs, and printable records.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
