@@ -228,18 +228,24 @@ export const UploadBox: React.FC<UploadBoxProps> = ({
     <div id="upload-box-1" className="bg-white rounded-2xl border-2 border-sky-400 shadow-xl overflow-hidden transition-all">
       
       {/* Box 1 Header - LIGHT BLUE THEME */}
-      <div className="bg-gradient-to-r from-sky-600 via-sky-700 to-blue-700 px-6 py-4 border-b border-sky-300/40 flex items-center justify-between text-white">
+      <div className="bg-gradient-to-r from-sky-600 via-sky-700 to-blue-700 px-6 py-4 border-b border-sky-300/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-white">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-lg bg-sky-950/50 border border-sky-200/50 flex items-center justify-center text-sky-100 shadow-xs">
+          <div className="w-9 h-9 rounded-lg bg-sky-950/50 border border-sky-200/50 flex items-center justify-center text-sky-100 shadow-xs shrink-0">
             {editingRecord ? <Save className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
           </div>
           <div>
             <h2 className="font-serif font-bold text-lg tracking-wide uppercase text-white flex items-center space-x-2">
               <span>{editingRecord ? 'Edit Encrypted Document' : 'Encrypted Upload & Document Entry'}</span>
             </h2>
-            <p className="text-xs text-sky-100/90">
-              AES-256 Hardware Encrypted Entry • PIN Protected Access
-            </p>
+            <div className="flex items-center space-x-2 mt-0.5">
+              <span className="text-xs text-sky-100/90">
+                AES-256 Hardware Encrypted Entry
+              </span>
+              <span className="text-[10px] bg-amber-400 text-slate-950 font-extrabold px-2 py-0.5 rounded-md flex items-center space-x-1 shadow-xs">
+                <span>👤 Saving to:</span>
+                <span className="underline decoration-slate-900">{member}</span>
+              </span>
+            </div>
           </div>
         </div>
 

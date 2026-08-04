@@ -194,12 +194,12 @@ export async function loadRecordsFromIDB(): Promise<DocumentRecord[]> {
       req.onerror = () => reject(req.error);
     });
 
-    if (data && Array.isArray(data) && data.length > 0) {
+    if (data && Array.isArray(data)) {
       recordsCache = data;
       try {
         localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(data));
       } catch (e) {
-        // LocalStorage quota limit reached for large attachments, safely handled by IndexedDB
+        // Quota exceeded for localStorage, safe in IndexedDB
       }
       return data;
     }
@@ -209,17 +209,31 @@ export async function loadRecordsFromIDB(): Promise<DocumentRecord[]> {
 
   const lsData = loadRecordsFromLS();
   recordsCache = lsData;
+
+  // Persist to IDB if lsData loaded
+  try {
+    const db = await getIDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    store.put(lsData, STORAGE_KEY_RECORDS);
+  } catch (e) {
+    // Ignore IDB write error during initial fallback
+  }
+
   return lsData;
 }
 
 export async function saveRecordsToIDB(records: DocumentRecord[]): Promise<void> {
   recordsCache = records;
+  
+  // 1. Try LocalStorage (fast cache, may fail on large attachments)
   try {
     localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(records));
   } catch (err) {
-    console.warn('LocalStorage limit reached, storing in IndexedDB for large attachments:', err);
+    console.warn('LocalStorage limit reached for large attachments, safely stored in IndexedDB:', err);
   }
 
+  // 2. Always persist to IndexedDB (unlimited storage for attachments & PDFs)
   try {
     const db = await getIDB();
     const tx = db.transaction(STORE_NAME, 'readwrite');
