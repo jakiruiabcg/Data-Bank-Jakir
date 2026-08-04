@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Lock, Key, Activity, Sparkles, UserCheck, Smartphone } from 'lucide-react';
+import { ShieldCheck, Lock, LogOut, Key, Activity, Sparkles, UserCheck, Smartphone } from 'lucide-react';
 import { UserSecurityConfig } from '../types';
 
 interface QatarHeaderProps {
@@ -43,11 +43,11 @@ export const QatarHeader: React.FC<QatarHeaderProps> = ({
                   Personal Data Bank
                 </span>
                 <span className="bg-[#D4AF37] text-[#4A0427] text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow">
-                  Akter
+                  {config.ownerName || 'Active'}
                 </span>
               </div>
               <p className="text-[11px] text-[#E2C376] tracking-wider uppercase font-medium hidden sm:block">
-                Qatar Luxury Vault • AES-256 Cloud Encryption • PIN 2020
+                Secure Data Bank
               </p>
             </div>
           </div>
@@ -87,20 +87,20 @@ export const QatarHeader: React.FC<QatarHeaderProps> = ({
             {/* PIN Settings */}
             <button
               onClick={onOpenPinChange}
-              title="Change Security PIN (Current: 2020)"
+              title="Change Security PIN"
               className="p-2 sm:px-3 sm:py-1.5 rounded-lg bg-[#5C0632] hover:bg-[#70002A] border border-[#D4AF37]/40 text-xs text-white transition-all flex items-center space-x-1.5"
             >
               <Key className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span className="hidden sm:inline">PIN 2020</span>
+              <span className="hidden sm:inline">PIN Settings</span>
             </button>
 
-            {/* Lock Vault */}
+            {/* Sign Out / Lock Vault */}
             <button
               onClick={onLockVault}
               className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#D4AF37] to-[#C5A059] text-[#4A0427] font-bold text-xs uppercase tracking-wider hover:brightness-110 transition-all shadow-md active:scale-95"
             >
-              <Lock className="w-3.5 h-3.5" />
-              <span>{isUnlocked ? 'Lock Vault' : 'Unlocked'}</span>
+              <LogOut className="w-3.5 h-3.5" />
+              <span>{isUnlocked ? 'Sign Out' : 'Unlocked'}</span>
             </button>
           </div>
 
@@ -109,3 +109,4 @@ export const QatarHeader: React.FC<QatarHeaderProps> = ({
     </header>
   );
 };
+

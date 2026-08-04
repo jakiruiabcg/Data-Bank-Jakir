@@ -17,10 +17,14 @@ import {
   ShieldCheck, 
   Play,
   ExternalLink,
-  Star
+  Star,
+  Download,
+  Maximize2,
+  FileCheck
 } from 'lucide-react';
 import { DocumentRecord } from '../types';
 import { decryptData, formatBytes } from '../utils/crypto';
+import { downloadRecord } from '../utils/download';
 
 interface DocumentCardProps {
   record: DocumentRecord;
@@ -30,6 +34,7 @@ interface DocumentCardProps {
   onPrint: (record: DocumentRecord) => void;
   onWatchVideo: (videoUrl: string, title: string, desc: string) => void;
   onToggleStar?: (id: string) => void;
+  onOpenPdfModal?: (url: string, title: string, fileName: string, fileSize?: number) => void;
 }
 
 export const DocumentCard: React.FC<DocumentCardProps> = ({
@@ -40,6 +45,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   onPrint,
   onWatchVideo,
   onToggleStar,
+  onOpenPdfModal,
 }) => {
   const [isDecrypted, setIsDecrypted] = useState(false);
   const [decryptedText, setDecryptedText] = useState('');
@@ -73,15 +79,35 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
 
   const isVideo = record.attachment && record.attachment.videoUrl;
 
+  // Attachment type detection
+  const att = record.attachment;
+  const isPdf = !!att && (
+    att.type === 'application/pdf' ||
+    att.name.toLowerCase().endsWith('.pdf') ||
+    (!!att.dataUrl && att.dataUrl.startsWith('data:application/pdf'))
+  );
+  const isImage = !!att && !isPdf && (
+    (!!att.type && att.type.startsWith('image/')) ||
+    (!!att.dataUrl && att.dataUrl.startsWith('data:image/')) ||
+    /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(att.name)
+  );
+
+  const pdfTargetUrl = att?.dataUrl || (att?.type === 'application/pdf' ? att.previewUrl : undefined);
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 hover:border-[#D4AF37] shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden group">
       
       {/* Top Banner & Status Header */}
       <div className="p-4 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 flex items-start justify-between gap-2">
         
-        <div className="flex items-center space-x-2 truncate">
+        <div className="flex flex-wrap items-center gap-1.5 truncate">
           <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#4A0427] text-[#F3E5AB] border border-[#D4AF37]/30 shadow-xs shrink-0">
             {record.category}
+          </span>
+
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-100 text-sky-950 border border-sky-300 shrink-0 flex items-center space-x-1">
+            <span>👤</span>
+            <span>{record.member || 'Jakir'}</span>
           </span>
 
           {record.isEncrypted ? (
@@ -158,15 +184,95 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
           </div>
         )}
 
-        {/* Regular File Attachment Banner */}
+        {/* File Attachment Banner (Image or PDF Thumbnail) */}
         {record.attachment && !isVideo && (
-          <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
-            <div className="flex items-center space-x-2 truncate">
-              <FileText className="w-4 h-4 text-[#4A0427] shrink-0" />
-              <span className="truncate font-medium text-slate-700">{record.attachment.name}</span>
-            </div>
-            {record.attachment.size > 0 && (
-              <span className="text-[10px] font-mono text-slate-500 shrink-0">{formatBytes(record.attachment.size)}</span>
+          <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
+            {isPdf ? (
+              /* PDF THUMBNAIL CARD PREVIEW */
+              <div className="relative group bg-slate-900 border border-rose-950/40 rounded-xl overflow-hidden shadow-sm">
+                {pdfTargetUrl && pdfTargetUrl.startsWith('data:application/pdf') ? (
+                  <iframe
+                    src={`${pdfTargetUrl}#toolbar=0&navpanes=0&view=FitH`}
+                    title={record.attachment.name}
+                    className="w-full h-40 pointer-events-none bg-white opacity-90 group-hover:opacity-100 transition-opacity border-b border-rose-900/30"
+                  />
+                ) : record.attachment.previewUrl ? (
+                  <div className="relative max-h-40 overflow-hidden bg-slate-900 flex items-center justify-center p-1">
+                    <img
+                      src={record.attachment.previewUrl}
+                      alt={record.attachment.name}
+                      className="max-h-36 w-auto object-contain rounded shadow-sm opacity-90 group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+                ) : (
+                  <div className="p-4 bg-gradient-to-br from-rose-950 via-slate-900 to-rose-900 text-white flex items-center space-x-3">
+                    <div className="p-2.5 rounded-xl bg-rose-600 text-white shadow-md shrink-0">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                    <div className="truncate text-left">
+                      <span className="text-[10px] bg-rose-500 text-white font-extrabold px-2 py-0.5 rounded uppercase tracking-wider">
+                        PDF Document
+                      </span>
+                      <p className="text-xs font-bold text-white truncate mt-1">{record.attachment.name}</p>
+                      {record.attachment.size > 0 && (
+                        <p className="text-[10px] text-rose-200 font-mono mt-0.5">{formatBytes(record.attachment.size)}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* PDF Badge & Action Bar Overlay */}
+                <div className="bg-slate-900/90 border-t border-rose-900/50 p-2 flex items-center justify-between text-white text-[10px] font-bold">
+                  <div className="flex items-center space-x-1.5 truncate">
+                    <span className="px-2 py-0.5 rounded bg-rose-600 text-white font-extrabold text-[9px] uppercase tracking-wider shrink-0">
+                      📄 PDF
+                    </span>
+                    <span className="truncate max-w-[130px] text-slate-200 font-medium">{record.attachment.name}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const urlToOpen = pdfTargetUrl || record.attachment?.previewUrl;
+                      if (urlToOpen && onOpenPdfModal) {
+                        onOpenPdfModal(urlToOpen, record.subject, record.attachment!.name, record.attachment!.size);
+                      } else if (onOpenPdfModal && record.attachment?.dataUrl) {
+                        onOpenPdfModal(record.attachment.dataUrl, record.subject, record.attachment.name, record.attachment.size);
+                      } else {
+                        onPrint(record);
+                      }
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] uppercase tracking-wider shadow-sm flex items-center space-x-1 shrink-0 transition-all"
+                  >
+                    <Eye className="w-3 h-3" />
+                    <span>View PDF</span>
+                  </button>
+                </div>
+              </div>
+            ) : isImage && (record.attachment.previewUrl || record.attachment.dataUrl) ? (
+              /* IMAGE THUMBNAIL PREVIEW */
+              <div className="relative group bg-slate-900 flex items-center justify-center p-2 max-h-48">
+                <img
+                  src={record.attachment.previewUrl || record.attachment.dataUrl}
+                  alt={record.attachment.name}
+                  className="max-h-44 w-auto object-contain rounded shadow-sm transition-transform group-hover:scale-105"
+                />
+                <div className="absolute bottom-2 left-2 bg-black/80 text-white text-[9px] font-bold px-2 py-0.5 rounded backdrop-blur-xs flex items-center space-x-1 border border-white/20">
+                  <Paperclip className="w-3 h-3 text-sky-400" />
+                  <span className="truncate max-w-[150px]">{record.attachment.name}</span>
+                </div>
+              </div>
+            ) : (
+              /* OTHER FILE ATTACHMENT */
+              <div className="p-2.5 flex items-center justify-between text-xs">
+                <div className="flex items-center space-x-2 truncate">
+                  <FileText className="w-4 h-4 text-[#4A0427] shrink-0" />
+                  <span className="truncate font-medium text-slate-700">{record.attachment.name}</span>
+                </div>
+                {record.attachment.size > 0 && (
+                  <span className="text-[10px] font-mono text-slate-500 shrink-0">{formatBytes(record.attachment.size)}</span>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -234,8 +340,17 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
           </div>
         )}
 
-        {/* Secondary Buttons: Print PDF, Edit, Delete */}
+        {/* Secondary Buttons: Download, Print PDF, Edit, Delete */}
         <div className="flex items-center space-x-1">
+          {/* Download Record Button */}
+          <button
+            onClick={() => downloadRecord(record, isDecrypted ? decryptedText : undefined)}
+            title="Download Record & Details"
+            className="p-1.5 rounded-lg bg-[#4A0427] hover:bg-[#70002A] text-[#F3E5AB] border border-[#D4AF37]/30 transition-colors shadow-xs"
+          >
+            <Download className="w-4 h-4 text-[#D4AF37]" />
+          </button>
+
           {/* Printable in PDF format */}
           <button
             onClick={() => onPrint(record)}
@@ -248,7 +363,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
           {/* Edit Button */}
           <button
             onClick={() => onEdit(record)}
-            title="Edit Document (Box 01)"
+            title="Edit Document"
             className="p-1.5 rounded-lg bg-white hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors"
           >
             <Edit3 className="w-4 h-4 text-blue-700" />

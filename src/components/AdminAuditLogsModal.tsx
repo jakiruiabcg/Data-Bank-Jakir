@@ -16,6 +16,14 @@ export const AdminAuditLogsModal: React.FC<AdminAuditLogsModalProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const filteredLogs = logs.filter(log => {
     const matchesStatus = statusFilter === 'ALL' || log.status === statusFilter;
     const matchesQuery = 
@@ -42,14 +50,19 @@ export const AdminAuditLogsModal: React.FC<AdminAuditLogsModalProps> = ({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `akter_audit_logs_${Date.now()}.csv`);
+    link.setAttribute('download', `vault_audit_logs_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+    <div 
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+    >
       <div className="w-full max-w-4xl bg-[#4A0427] border-2 border-[#D4AF37] rounded-2xl shadow-2xl overflow-hidden text-white flex flex-col max-h-[85vh]">
         
         {/* Header */}
@@ -63,7 +76,7 @@ export const AdminAuditLogsModal: React.FC<AdminAuditLogsModalProps> = ({
                 Administrator Real-Time Audit Logs
               </h2>
               <p className="text-xs text-slate-300">
-                Live Event Tracking • Security Monitoring for Akter Vault
+                Live Event Tracking • Security Monitoring for Jakir Vault
               </p>
             </div>
           </div>

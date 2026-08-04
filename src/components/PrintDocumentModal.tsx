@@ -19,8 +19,21 @@ export const PrintDocumentModal: React.FC<PrintDocumentModalProps> = ({
 
   const textToDisplay = decryptedText || record.description;
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
+    <div 
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm overflow-y-auto"
+    >
       
       {/* Modal Card */}
       <div className="w-full max-w-3xl bg-white border-2 border-[#D4AF37] rounded-2xl shadow-2xl overflow-hidden my-8">
@@ -63,11 +76,11 @@ export const PrintDocumentModal: React.FC<PrintDocumentModalProps> = ({
                   Personal Data Bank
                 </span>
                 <span className="bg-[#4A0427] text-[#D4AF37] text-xs font-bold px-2.5 py-1 rounded uppercase">
-                  Akter
+                  RECORD
                 </span>
               </div>
               <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold mt-1">
-                Official Encrypted Document Record Voucher • Qatar Airways Inspired Vault
+                Official Encrypted Document Record Voucher • Security Vault
               </p>
             </div>
 
@@ -109,7 +122,7 @@ export const PrintDocumentModal: React.FC<PrintDocumentModalProps> = ({
                 </span>
                 <span className="text-sm font-bold text-emerald-700 flex items-center space-x-1">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>PIN 2020 Verified</span>
+                  <span>PIN Verified</span>
                 </span>
               </div>
             </div>
@@ -169,8 +182,8 @@ export const PrintDocumentModal: React.FC<PrintDocumentModalProps> = ({
           {/* Certificate Footer Verification Stamp */}
           <div className="pt-8 border-t-2 border-[#4A0427] flex items-center justify-between text-[10px] text-slate-500 font-mono">
             <div>
-              <p className="font-bold text-slate-800">Personal Data Bank (Akter)</p>
-              <p>Hardware Cryptography • PIN 2020 Master Key</p>
+              <p className="font-bold text-slate-800">Personal Data Bank (Jakir)</p>
+              <p>Hardware Cryptography • Master Security Key</p>
             </div>
 
             <div className="text-right">

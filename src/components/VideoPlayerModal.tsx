@@ -17,8 +17,21 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 }) => {
   const parsed = parseVideoUrl(videoUrl);
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+    <div 
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+    >
       <div className="w-full max-w-4xl bg-[#4A0427] border-2 border-[#D4AF37] rounded-2xl shadow-2xl overflow-hidden text-white flex flex-col max-h-[90vh]">
         
         {/* Header */}
@@ -83,7 +96,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider flex items-center space-x-1">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Personal Data Bank • Akter Vault Saved Item</span>
+              <span>Personal Data Bank • Jakir Vault Saved Item</span>
             </span>
 
             <a

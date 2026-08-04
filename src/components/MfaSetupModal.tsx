@@ -18,13 +18,21 @@ export const MfaSetupModal: React.FC<MfaSetupModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
-  const secret = config.mfaSecret || 'AKTER-MFA-9842-7710';
+  const secret = config.mfaSecret || 'JAKIR-MFA-9842-7710';
 
   const handleCopySecret = () => {
     navigator.clipboard.writeText(secret);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const handleToggleMfa = () => {
     const nextState = !mfaEnabled;
@@ -36,7 +44,12 @@ export const MfaSetupModal: React.FC<MfaSetupModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+    <div 
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+    >
       <div className="w-full max-w-lg bg-[#4A0427] border-2 border-[#D4AF37] rounded-2xl shadow-2xl overflow-hidden text-white">
         
         {/* Header */}
@@ -50,7 +63,7 @@ export const MfaSetupModal: React.FC<MfaSetupModalProps> = ({
                 Multi-Factor Authentication (MFA)
               </h2>
               <p className="text-xs text-slate-300">
-                2FA Hardware Security Layer • Akter Vault
+                2FA Hardware Security Layer • Security Vault
               </p>
             </div>
           </div>
@@ -80,7 +93,7 @@ export const MfaSetupModal: React.FC<MfaSetupModalProps> = ({
                 Two-Factor Authenticator Protection
               </span>
               <p className="text-xs text-slate-300">
-                Requires 6-digit TOTP code in addition to PIN 2020.
+                Requires 6-digit TOTP code in addition to Security PIN.
               </p>
             </div>
 
@@ -106,7 +119,7 @@ export const MfaSetupModal: React.FC<MfaSetupModalProps> = ({
               {/* QR Code Placeholder Box */}
               <div className="w-20 h-20 bg-white p-1.5 rounded-lg shrink-0 flex items-center justify-center">
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=otpauth://totp/AkterDataBank:vault?secret=${secret}&issuer=QatarAirwaysVault`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=otpauth://totp/JakirDataBank:vault?secret=${secret}&issuer=DataVault`}
                   alt="MFA QR Code"
                   className="w-full h-full object-contain"
                 />
@@ -157,10 +170,10 @@ export const MfaSetupModal: React.FC<MfaSetupModalProps> = ({
           <div className="p-3 bg-[#36011B] rounded-xl border border-[#D4AF37]/20 text-xs space-y-1">
             <span className="font-bold text-[#F3E5AB] block">Emergency Backup Codes</span>
             <div className="font-mono text-[11px] text-slate-300 grid grid-cols-2 gap-1 pt-1">
-              <span>• AKTER-8921-X9</span>
-              <span>• AKTER-4092-B7</span>
-              <span>• AKTER-7712-Z4</span>
-              <span>• AKTER-2020-QA</span>
+              <span>• JAKIR-8921-X9</span>
+              <span>• JAKIR-4092-B7</span>
+              <span>• JAKIR-7712-Z4</span>
+              <span>• JAKIR-2020-QA</span>
             </div>
           </div>
 

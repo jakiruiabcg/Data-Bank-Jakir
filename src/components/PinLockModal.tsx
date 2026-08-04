@@ -44,25 +44,51 @@ export const PinLockModal: React.FC<PinLockModalProps> = ({
       onUnlock();
     } else {
       setAttempts(prev => prev + 1);
-      setError(`Incorrect Security PIN. Default PIN is 2020. (Attempt ${attempts + 1})`);
+      setError(`Incorrect Security PIN. (Attempt ${attempts + 1})`);
       setPinInput('');
     }
   };
 
-  // Keyboard navigation support
+  // Keyboard navigation & physical keyboard support
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in another input element outside modal (if any)
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName) && (e.target as HTMLElement).id !== 'pin-physical-input') {
+        return;
+      }
+
       if (e.key >= '0' && e.key <= '9') {
-        handleKeyPress(e.key);
+        e.preventDefault();
+        setPinInput(prev => {
+          if (prev.length >= 6) return prev;
+          const updated = prev + e.key;
+          if (updated === correctPin) {
+            setTimeout(() => onUnlock(), 50);
+          }
+          return updated;
+        });
+        setError('');
       } else if (e.key === 'Backspace') {
-        handleDelete();
+        e.preventDefault();
+        setPinInput(prev => prev.slice(0, -1));
+        setError('');
       } else if (e.key === 'Enter') {
-        handleSubmit();
+        e.preventDefault();
+        if (pinInput === correctPin) {
+          onUnlock();
+        } else {
+          setAttempts(prev => prev + 1);
+          setError(`Incorrect Security PIN. (Attempt ${attempts + 1})`);
+          setPinInput('');
+        }
+      } else if (e.key === 'Escape') {
+        setPinInput('');
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [pinInput, correctPin]);
+  }, [pinInput, correctPin, attempts, onUnlock]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#230212]/90 backdrop-blur-md animate-fade-in">
@@ -77,7 +103,7 @@ export const PinLockModal: React.FC<PinLockModalProps> = ({
             Personal Data Bank
           </h2>
           <p className="text-xs text-[#E2C376] uppercase tracking-widest mt-1">
-            Qatar Airways Security Vault • {ownerName}
+            Security Vault • {ownerName}
           </p>
         </div>
 
@@ -87,13 +113,44 @@ export const PinLockModal: React.FC<PinLockModalProps> = ({
             <p className="text-sm font-medium text-slate-200">
               Enter Security PIN to Access Encrypted Records
             </p>
-            <p className="text-xs text-[#D4AF37]/80">
-              Master PIN Protection Enabled (Default: <span className="font-bold underline">2020</span>)
+            <p className="text-xs text-[#D4AF37]">
+              Master PIN Protection Enabled
             </p>
+            <div className="pt-1">
+              <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#36011B] border border-[#D4AF37]/40 text-[11px] text-[#F3E5AB]">
+                <span>⌨️</span>
+                <span>Type directly with physical keyboard / কি-বোর্ডে পিন টাইপ করুন</span>
+              </span>
+            </div>
           </div>
 
-          {/* PIN Indicator Dots / Text */}
-          <div className="flex justify-center items-center space-x-3 my-4">
+          {/* PIN Indicator Dots / Hidden Input for Keyboard Focus */}
+          <div 
+            onClick={() => {
+              const inputEl = document.getElementById('pin-hidden-input');
+              if (inputEl) inputEl.focus();
+            }}
+            className="flex justify-center items-center space-x-3 my-4 cursor-pointer"
+          >
+            <input
+              id="pin-hidden-input"
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoFocus
+              maxLength={6}
+              value={pinInput}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                setPinInput(val);
+                setError('');
+                if (val === correctPin) {
+                  onUnlock();
+                }
+              }}
+              className="sr-only"
+              aria-label="Security PIN Input"
+            />
             {[0, 1, 2, 3].map(idx => {
               const hasDigit = pinInput.length > idx;
               return (
@@ -162,7 +219,7 @@ export const PinLockModal: React.FC<PinLockModalProps> = ({
               className="w-full py-3 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#C5A059] text-[#4A0427] font-bold text-sm uppercase tracking-wider shadow-lg hover:brightness-110 active:scale-98 transition-all flex items-center justify-center space-x-2"
             >
               <KeyRound className="w-4 h-4" />
-              <span>Unlock Vault (2020)</span>
+              <span>Unlock Vault</span>
             </button>
 
             <button
@@ -176,7 +233,7 @@ export const PinLockModal: React.FC<PinLockModalProps> = ({
 
             {showHint && (
               <div className="p-3 bg-[#36011B] rounded-lg border border-[#D4AF37]/30 text-xs text-[#F3E5AB] text-center w-full">
-                🔒 Default system Security PIN is <strong className="text-white text-sm px-1.5 py-0.5 bg-[#70002A] rounded">2020</strong>. Click "Unlock Vault" above or press 2-0-2-0.
+                🔒 Enter your Security PIN to unlock. Click "Unlock Vault" above or press Enter.
               </div>
             )}
           </div>

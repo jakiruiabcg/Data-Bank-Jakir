@@ -7,6 +7,9 @@ export type CategoryType =
   | 'Videos & Media' 
   | 'Medical';
 
+export type FamilyMember = 'Jakir' | 'Ayesha' | 'Nowrin' | 'Nowshad';
+export const FAMILY_MEMBERS: FamilyMember[] = ['Jakir', 'Ayesha', 'Nowrin', 'Nowshad'];
+
 export type EncryptionLevel = 'AES-256-GCM' | 'Standard Safe';
 
 export interface Attachment {
@@ -24,6 +27,7 @@ export interface DocumentRecord {
   id: string;
   subject: string;
   category: CategoryType;
+  member?: FamilyMember; // Owner family member
   description: string;
   encryptedContent?: string; // Encrypted JSON payload string
   attachment?: Attachment;
@@ -64,6 +68,6 @@ export interface UserSecurityConfig {
   mfaSecret?: string;
   autoLockMinutes: number; // 0 for never, or 1, 5, 15
   lastUnlockedAt?: string;
-  ownerName: string; // "Akter"
+  ownerName: string; // "Jakir"
   ownerRole: string; // "System Admin & Vault Owner"
 }
