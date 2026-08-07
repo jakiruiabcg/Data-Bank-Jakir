@@ -70,9 +70,9 @@ export default function App() {
   }, []);
 
   // Sync Records to LocalStorage & IndexedDB
-  const updateRecords = (newRecords: DocumentRecord[]) => {
+  const updateRecords = async (newRecords: DocumentRecord[]) => {
     setRecords(newRecords);
-    saveRecords(newRecords);
+    await saveRecords(newRecords);
   };
 
   // Sync Security Config
@@ -87,7 +87,9 @@ export default function App() {
   const handleUnlockVault = async () => {
     setIsUnlocked(true);
     const freshRecs = await loadRecordsFromIDB();
-    setRecords(freshRecs);
+    if (freshRecs && freshRecs.length > 0) {
+      setRecords(freshRecs);
+    }
     addAuditLog('PIN_UNLOCKED', `Vault unlocked with Security PIN ${config.pin}`);
     setLogs(loadLogs());
   };
@@ -124,7 +126,7 @@ export default function App() {
       } as DocumentRecord;
 
       updatedList[existingIndex] = updatedRecord;
-      updateRecords(updatedList);
+      await updateRecords(updatedList);
       setEditingRecord(null);
 
       addAuditLog('DOC_UPDATED', `Updated record: "${updatedRecord.subject}"`);
@@ -149,7 +151,7 @@ export default function App() {
       };
 
       const updatedList = [newRecord, ...records];
-      updateRecords(updatedList);
+      await updateRecords(updatedList);
 
       if (newRecord.attachment && newRecord.attachment.videoUrl) {
         addAuditLog('VIDEO_LINK_SAVED', `Saved video link: "${newRecord.subject}"`);
@@ -162,10 +164,10 @@ export default function App() {
   };
 
   // Delete Record Handler
-  const handleDeleteRecord = (id: string) => {
+  const handleDeleteRecord = async (id: string) => {
     const target = records.find(r => r.id === id);
     const updated = records.filter(r => r.id !== id);
-    updateRecords(updated);
+    await updateRecords(updated);
     if (target) {
       addAuditLog('DOC_DELETED', `Deleted record: "${target.subject}"`, 'WARNING');
       setLogs(loadLogs());
@@ -173,11 +175,11 @@ export default function App() {
   };
 
   // Star Bookmark Handler
-  const handleToggleStar = (id: string) => {
+  const handleToggleStar = async (id: string) => {
     const updated = records.map(r => 
       r.id === id ? { ...r, starred: !r.starred } : r
     );
-    updateRecords(updated);
+    await updateRecords(updated);
   };
 
   // Scroll to Box 1 helper for mobile

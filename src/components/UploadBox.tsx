@@ -397,151 +397,64 @@ export const UploadBox: React.FC<UploadBoxProps> = ({
               }`}
             >
               {attachedFile ? (
-                /* PDF THUMBNAIL PREVIEW */
-                attachedFile.type === 'application/pdf' || attachedFile.name.toLowerCase().endsWith('.pdf') || (attachedFile.dataUrl && attachedFile.dataUrl.startsWith('data:application/pdf')) ? (
-                  <div className="relative group bg-slate-900 rounded-xl p-3 border-2 border-rose-500 shadow-lg text-white text-left transition-all">
-                    {/* PDF Header bar */}
-                    <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2">
-                      <div className="flex items-center space-x-2 truncate">
-                        <div className="p-1.5 rounded-lg bg-rose-600/30 text-rose-400 border border-rose-500/40 shrink-0">
-                          <FileText className="w-4 h-4" />
-                        </div>
-                        <div className="truncate">
-                          <div className="flex items-center space-x-1.5">
-                            <span className="bg-rose-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">
-                              PDF Document
-                            </span>
-                            <p className="text-xs font-bold text-rose-100 truncate">{attachedFile.name}</p>
-                          </div>
-                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                            {formatBytes(attachedFile.size)} • PDF Attachment Ready
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-1.5 shrink-0">
-                        {attachedFile.dataUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setShowPdfModal(true)}
-                            className="p-1.5 rounded-lg bg-rose-900 hover:bg-rose-600 text-white border border-rose-700 transition-colors flex items-center space-x-1 text-xs font-bold px-2.5"
-                            title="Full PDF Preview"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>Preview PDF</span>
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setAttachedFile(null)}
-                          className="p-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white transition-colors shadow-xs"
-                          title="Remove PDF"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Live PDF Thumbnail Canvas Box */}
-                    <div className="relative rounded-lg overflow-hidden bg-white border border-rose-900/40 h-44 flex items-center justify-center group">
-                      {attachedFile.dataUrl && attachedFile.dataUrl.startsWith('data:application/pdf') ? (
-                        <iframe
-                          src={`${attachedFile.dataUrl}#toolbar=0&navpanes=0&view=FitH`}
-                          title={attachedFile.name}
-                          className="w-full h-full pointer-events-none rounded bg-white"
-                        />
+                /* LIGHTWEIGHT FILE ATTACHMENT CARD (No heavy inline iframe/image thumbnail) */
+                <div className="flex items-center justify-between bg-slate-900 p-3.5 rounded-xl border-2 border-sky-400 shadow-md text-white text-left">
+                  <div className="flex items-center space-x-3 truncate">
+                    <div className="p-2.5 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-400/30 shrink-0">
+                      {attachedFile.type === 'application/pdf' || attachedFile.name.toLowerCase().endsWith('.pdf') ? (
+                        <FileText className="w-6 h-6 text-rose-400" />
+                      ) : attachedFile.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(attachedFile.name) ? (
+                        <ImageIcon className="w-6 h-6 text-sky-400" />
                       ) : (
-                        <div className="text-center text-slate-700 p-4 space-y-2">
-                          <FileText className="w-10 h-10 mx-auto text-rose-600" />
-                          <p className="text-xs font-bold text-slate-800">{attachedFile.name}</p>
-                        </div>
+                        <Paperclip className="w-6 h-6 text-amber-400" />
                       )}
-                      
-                      {/* Badge overlay */}
-                      <div className="absolute bottom-2 left-2 bg-slate-900/90 backdrop-blur-xs text-white text-[10px] px-2.5 py-1 rounded-md font-bold flex items-center space-x-1.5 border border-rose-400/40 shadow-md">
-                        <Sparkles className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-                        <span>Attached PDF Thumbnail Preview</span>
-                      </div>
                     </div>
-                  </div>
-                ) : (attachedFile.previewUrl || (attachedFile.dataUrl && attachedFile.dataUrl.startsWith('data:image/')) || (attachedFile.type && attachedFile.type.startsWith('image/'))) ? (
-                  /* IMAGE THUMBNAIL PREVIEW (PASSPORT, VISA, DOC PHOTOS) */
-                  <div className="relative group bg-slate-900 rounded-xl p-3 border-2 border-sky-400 shadow-lg text-white text-left transition-all">
-                    {/* Header bar */}
-                    <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2">
-                      <div className="flex items-center space-x-2 truncate">
-                        <div className="p-1.5 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-400/30 shrink-0">
-                          <ImageIcon className="w-4 h-4" />
-                        </div>
-                        <div className="truncate">
-                          <p className="text-xs font-bold text-sky-200 truncate">{attachedFile.name}</p>
-                          <p className="text-[10px] text-slate-400 font-mono">
-                            {formatBytes(attachedFile.size)} • Photo Attachment Preview
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-1.5 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => setPreviewModalUrl(attachedFile.previewUrl || attachedFile.dataUrl || null)}
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-sky-600 text-slate-300 hover:text-white border border-slate-700 transition-colors"
-                          title="Full Image View"
-                        >
-                          <Maximize2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setAttachedFile(null)}
-                          className="p-1.5 rounded-lg bg-rose-600/90 hover:bg-rose-600 text-white transition-colors shadow-xs"
-                          title="Remove Photo"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Image canvas box */}
-                    <div className="relative rounded-lg overflow-hidden bg-black/80 border border-slate-800 max-h-56 flex items-center justify-center p-2 group">
-                      <img
-                        src={attachedFile.previewUrl || attachedFile.dataUrl}
-                        alt={attachedFile.name}
-                        className="max-h-52 w-auto object-contain rounded shadow-xl transition-transform duration-300 group-hover:scale-[1.02] cursor-pointer"
-                        onClick={() => setPreviewModalUrl(attachedFile.previewUrl || attachedFile.dataUrl || null)}
-                      />
-                      
-                      {/* Badge overlay */}
-                      <div className="absolute bottom-2 left-2 bg-black/80 backdrop-blur-xs text-white text-[10px] px-2.5 py-1 rounded-md font-bold flex items-center space-x-1.5 border border-white/20 shadow-md">
-                        <Sparkles className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
-                        <span>Attached Photo Thumbnail (Passport / Visa / ID)</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* OTHER FILE PREVIEW (DOCS, TXT) */
-                  <div className="flex items-center justify-between bg-white p-3.5 rounded-xl border border-sky-300 shadow-sm text-left">
-                    <div className="flex items-center space-x-3 truncate">
-                      <div className="p-2.5 rounded-lg bg-sky-100 text-sky-700 border border-sky-200 shrink-0">
-                        <FileText className="w-6 h-6" />
-                      </div>
-                      <div className="truncate">
-                        <p className="text-xs font-bold text-slate-800 truncate">{attachedFile.name}</p>
-                        <p className="text-[10px] text-slate-500 font-mono">
-                          {formatBytes(attachedFile.size)} • {attachedFile.type}
-                        </p>
-                        <span className="inline-block mt-1 text-[9px] bg-sky-100 text-sky-800 px-1.5 py-0.5 rounded font-bold border border-sky-300">
-                          File Ready for AES-256 Encryption
+                    <div className="truncate">
+                      <div className="flex items-center space-x-2">
+                        <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase ${attachedFile.type === 'application/pdf' || attachedFile.name.toLowerCase().endsWith('.pdf') ? 'bg-rose-600 text-white' : 'bg-sky-600 text-white'}`}>
+                          {attachedFile.type === 'application/pdf' || attachedFile.name.toLowerCase().endsWith('.pdf') ? 'PDF File' : 'Image / Document'}
                         </span>
+                        <p className="text-xs font-bold text-slate-100 truncate">{attachedFile.name}</p>
                       </div>
+                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                        {formatBytes(attachedFile.size)} • Encrypted Attachment Ready
+                      </p>
                     </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2 shrink-0 ml-2">
+                    {attachedFile.dataUrl && (attachedFile.type === 'application/pdf' || attachedFile.name.toLowerCase().endsWith('.pdf')) && (
+                      <button
+                        type="button"
+                        onClick={() => setShowPdfModal(true)}
+                        className="p-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition-colors flex items-center space-x-1 text-xs font-bold px-2.5 shadow-xs"
+                        title="Preview PDF Document"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Preview</span>
+                      </button>
+                    )}
+                    {attachedFile.dataUrl && (attachedFile.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(attachedFile.name)) && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewModalUrl(attachedFile.previewUrl || attachedFile.dataUrl || null)}
+                        className="p-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition-colors flex items-center space-x-1 text-xs font-bold px-2.5 shadow-xs"
+                        title="Preview Image"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Preview</span>
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setAttachedFile(null)}
-                      className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors shrink-0"
-                      title="Remove File"
+                      className="p-1.5 rounded-lg bg-rose-600/90 hover:bg-rose-700 text-white transition-colors shadow-xs"
+                      title="Remove Attachment"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                )
+                </div>
               ) : (
                 <label className="cursor-pointer block space-y-2 py-2">
                   <div className="w-12 h-12 rounded-full bg-sky-100 text-sky-600 mx-auto flex items-center justify-center border border-sky-200 shadow-xs">
@@ -552,7 +465,7 @@ export const UploadBox: React.FC<UploadBoxProps> = ({
                       Click to browse or drop file (Passport, Visa, PDF, Photo, Doc)
                     </span>
                     <span className="text-[10px] text-sky-700 font-semibold block mt-0.5">
-                      Attached photo will display as thumbnail preview
+                      Fast & lightweight file attachment • Ready for hardware encryption
                     </span>
                   </div>
                   <input

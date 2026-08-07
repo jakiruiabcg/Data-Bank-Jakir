@@ -32,8 +32,7 @@ const INITIAL_RECORDS: DocumentRecord[] = [
     attachment: {
       name: 'Jakir_Passport_Encrypted.pdf',
       size: 2450000,
-      type: 'application/pdf',
-      previewUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'
+      type: 'application/pdf'
     }
   },
   {
@@ -52,8 +51,7 @@ const INITIAL_RECORDS: DocumentRecord[] = [
     attachment: {
       name: 'Ayesha_NID_Document.pdf',
       size: 1820000,
-      type: 'application/pdf',
-      previewUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80'
+      type: 'application/pdf'
     }
   },
   {
@@ -182,6 +180,23 @@ function getIDB(): Promise<IDBDatabase> {
   });
 }
 
+// Create lightweight copy of records for LocalStorage to avoid QuotaExceededError while storing full data in IndexedDB
+function createLightweightRecords(records: DocumentRecord[]): DocumentRecord[] {
+  return records.map(r => {
+    if (r.attachment && r.attachment.dataUrl && r.attachment.dataUrl.length > 50000) {
+      return {
+        ...r,
+        attachment: {
+          ...r.attachment,
+          dataUrl: undefined, // Stripped only for LocalStorage fallback, full file is preserved in IndexedDB
+          previewUrl: undefined
+        }
+      };
+    }
+    return r;
+  });
+}
+
 export async function loadRecordsFromIDB(): Promise<DocumentRecord[]> {
   try {
     const db = await getIDB();
@@ -194,30 +209,44 @@ export async function loadRecordsFromIDB(): Promise<DocumentRecord[]> {
       req.onerror = () => reject(req.error);
     });
 
-    if (data && Array.isArray(data)) {
+    if (data && Array.isArray(data) && data.length > 0) {
       recordsCache = data;
       try {
-        localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(data));
+        localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(createLightweightRecords(data)));
       } catch (e) {
-        // Quota exceeded for localStorage, safe in IndexedDB
+        // Safe in IndexedDB
       }
       return data;
     }
   } catch (err) {
-    console.warn('IndexedDB load error, reading from localStorage fallback:', err);
+    console.warn('IndexedDB load error:', err);
   }
 
+  // Fallback to memory cache if available
+  if (recordsCache && recordsCache.length > 0) {
+    try {
+      const db = await getIDB();
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      store.put(recordsCache, STORAGE_KEY_RECORDS);
+    } catch (e) {
+      // Ignore IDB write error
+    }
+    return recordsCache;
+  }
+
+  // Fallback to LocalStorage
   const lsData = loadRecordsFromLS();
   recordsCache = lsData;
 
-  // Persist to IDB if lsData loaded
+  // Persist fallback to IDB
   try {
     const db = await getIDB();
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
     store.put(lsData, STORAGE_KEY_RECORDS);
   } catch (e) {
-    // Ignore IDB write error during initial fallback
+    // Ignore IDB write error
   }
 
   return lsData;
@@ -226,14 +255,7 @@ export async function loadRecordsFromIDB(): Promise<DocumentRecord[]> {
 export async function saveRecordsToIDB(records: DocumentRecord[]): Promise<void> {
   recordsCache = records;
   
-  // 1. Try LocalStorage (fast cache, may fail on large attachments)
-  try {
-    localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(records));
-  } catch (err) {
-    console.warn('LocalStorage limit reached for large attachments, safely stored in IndexedDB:', err);
-  }
-
-  // 2. Always persist to IndexedDB (unlimited storage for attachments & PDFs)
+  // 1. Primary storage: IndexedDB (Unlimited storage for base64 attachments, PDFs & images)
   try {
     const db = await getIDB();
     const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -245,6 +267,14 @@ export async function saveRecordsToIDB(records: DocumentRecord[]): Promise<void>
     });
   } catch (err) {
     console.error('Failed to save to IndexedDB:', err);
+  }
+
+  // 2. Secondary storage: LocalStorage (Lightweight metadata backup)
+  try {
+    const lightweight = createLightweightRecords(records);
+    localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(lightweight));
+  } catch (err) {
+    console.warn('LocalStorage quota limit reached, data safely stored in IndexedDB:', err);
   }
 }
 
@@ -269,9 +299,9 @@ export function loadRecords(): DocumentRecord[] {
   return loadRecordsFromLS();
 }
 
-export function saveRecords(records: DocumentRecord[]) {
+export async function saveRecords(records: DocumentRecord[]): Promise<void> {
   recordsCache = records;
-  saveRecordsToIDB(records);
+  await saveRecordsToIDB(records);
 }
 
 export function loadLogs(): AuditLog[] {
